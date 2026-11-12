@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="zh-Hant"><head><meta charset="utf-8">
-<title>StockScan 庫存掃碼</title>
+<html lang="en"><head><meta charset="utf-8">
+<title>StockScan Inventory</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>
 :root{--bg:#f3f5f6;--cd:#fff;--tx:#14262b;--mu:#62757b;--bd:#dde4e6;--pr:#0b5d6b;--pt:#fff;--wb:#fff1d6;--wt:#8a4b00;--rd:#b42318;--sh:#e8eef0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1b1e;--cd:#17282c;--tx:#e6f0f2;--mu:#93a9ae;--bd:#27403f;--pr:#4fc3d4;--pt:#06232a;--wb:#3a2b0d;--wt:#ffc56b;--rd:#ff8a80;--sh:#1d3236;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#0f1b1e;--cd:#17282c;--tx:#e6f0f2;--mu:#93a9ae;--bd:#27403f;--pr:#4fc3d4;--pt:#06232a;--wb:#3a2b0d;--wt:#ffc56b;--rd:#ff8a80;--sh:#1d3236;color-scheme:dark}
 *{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 -apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;padding:0 0 84px}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 -apple-system,"Segoe UI",system-ui,sans-serif;padding:0 0 84px}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--pr);z-index:10}
 header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--pr);color:var(--pt);display:flex;gap:10px;align-items:center;padding:10px 14px}
 header b{font-size:18px;flex:1;letter-spacing:.5px}
@@ -53,65 +53,65 @@ nav button.on{color:var(--pr);font-weight:700}
 .mu{color:var(--mu);font-size:13px}.empty{text-align:center;color:var(--mu);padding:26px 0}
 @media print{body::before,header,nav,#t,.noprint{display:none!important}main{padding:0;max-width:none}.lab{border-color:#ccc}}
 </style></head><body>
-<header><b>📦 StockScan</b><input id="usr" placeholder="操作者姓名" autocomplete="off"></header>
+<header><b>📦 StockScan</b><input id="usr" placeholder="Your name" autocomplete="off"></header>
 <main id="main"></main>
 <nav id="nav">
-<button data-a="tab" data-i="scan"><i>📷</i>掃碼</button>
-<button data-a="tab" data-i="stock"><i>🗄️</i>庫存</button>
-<button data-a="tab" data-i="label"><i>🏷️</i>標籤</button>
-<button data-a="tab" data-i="log"><i>🕘</i>紀錄</button>
+<button data-a="tab" data-i="scan"><i>📷</i>Scan</button>
+<button data-a="tab" data-i="stock"><i>🗄️</i>Stock</button>
+<button data-a="tab" data-i="label"><i>🏷️</i>Labels</button>
+<button data-a="tab" data-i="log"><i>🕘</i>Log</button>
 </nav>
 <div id="m" class="mo" hidden></div>
-<div id="camw" class="mo" hidden><video id="v" playsinline muted></video><div class="hint">對準條碼，連續掃描中</div><button class="gh" data-a="stopcam">關閉相機</button></div>
+<div id="camw" class="mo" hidden><video id="v" playsinline muted></video><div class="hint">Point at a barcode. Scanning continuously.</div><button class="gh" data-a="stopcam">Close camera</button></div>
 <div id="t" hidden></div>
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
 <script>
-const $=s=>document.querySelector(s),K="stockscan.preview.v1";
+const $=s=>document.querySelector(s),K="stockscan.preview.v2";
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const seed=[["K-file #15 25mm","根管器械",14,6],["K-file #20 25mm","根管器械",5,6],["Gutta-percha #30","充填材料",3,4],["紙尖 #25","充填材料",20,8],["橡皮障布","隔離",30,10],["次氯酸鈉 NaOCl 5%","沖洗藥劑",2,2],["Lidocaine 麻醉針","藥品",18,10],["檢查手套 M","感控耗材",6,5]];
+const seed=[["K-file #15 25mm","Endo files",14,6],["K-file #20 25mm","Endo files",5,6],["Gutta-percha #30","Obturation",3,4],["Paper points #25","Obturation",20,8],["Rubber dam sheets","Isolation",30,10],["NaOCl 5%","Irrigants",2,2],["Lidocaine cartridges","Pharmaceuticals",18,10],["Exam gloves M","Infection control",6,5]];
 let S=null;try{S=JSON.parse(localStorage.getItem(K))}catch(e){}
 if(!S||!S.items){S={user:"",mode:"out",seq:seed.length,log:[],items:seed.map((x,i)=>{const id="SR-"+String(i+1).padStart(4,"0");return{id,name:x[0],cat:x[1],qty:x[2],min:x[3],codes:[id]}})}}
 const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
 let tab="scan",nq=1,pc="",ed=null,sel=null,cam={on:false},tt;
 const get=id=>S.items.find(x=>x.id===id),find=c=>S.items.find(x=>x.codes.includes(c));
 
-function toast(msg,undo){const t=$("#t");t.innerHTML="<span>"+esc(msg)+"</span>"+(undo?'<button data-a="undo">撤銷</button>':"");t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,undo?4500:3000)}
-function adj(it,d){const n=Math.max(0,it.qty+d);d=n-it.qty;it.qty=n;S.log.unshift({t:Date.now(),u:S.user||"未命名",n:it.name,id:it.id,d,q:n});S.log=S.log.slice(0,300);save();render()}
-function undo(){const e=S.log.find(x=>!x.x);if(!e)return;const it=get(e.id);if(it)it.qty=Math.max(0,it.qty-e.d);e.x=1;save();render();toast("已撤銷："+e.n)}
+function toast(msg,undo){const t=$("#t");t.innerHTML="<span>"+esc(msg)+"</span>"+(undo?'<button data-a="undo">Undo</button>':"");t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,undo?4500:3000)}
+function adj(it,d){const n=Math.max(0,it.qty+d);d=n-it.qty;it.qty=n;S.log.unshift({t:Date.now(),u:S.user||"Unnamed",n:it.name,id:it.id,d,q:n});S.log=S.log.slice(0,300);save();render()}
+function undo(){const e=S.log.find(x=>!x.x);if(!e)return;const it=get(e.id);if(it)it.qty=Math.max(0,it.qty-e.d);e.x=1;save();render();toast("Undone: "+e.n)}
 function handle(code){code=String(code).trim();if(!code)return;const it=find(code);
  if(it){const d=(S.mode==="in"?1:-1)*Math.max(1,nq|0);adj(it,d);if(navigator.vibrate)navigator.vibrate(40);
-  toast((d>0?"進貨 +":"出貨 −")+Math.abs(d)+"　"+it.name+"　現有 "+it.qty+(it.qty<=it.min?"　⚠ 低庫存":""),true)}
- else{stopCam();pc=code;modal('<h3>找不到此條碼</h3><p class="mu">'+esc(code)+'</p><div class="acts"><button class="pri" data-a="bindnew">新增品項</button></div><label>或綁定到現有品項</label><select id="bsel">'+S.items.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join("")+'</select><div class="acts"><button class="gh" data-a="close">取消</button><button class="pri" data-a="bindex">綁定並記錄</button></div>')}}
+  toast((d>0?"Received +":"Taken out −")+Math.abs(d)+": "+it.name+". On hand: "+it.qty+(it.qty<=it.min?" ⚠ Low stock":""),true)}
+ else{stopCam();pc=code;modal('<h3>Barcode not found</h3><p class="mu">'+esc(code)+'</p><div class="acts"><button class="pri" data-a="bindnew">Add new item</button></div><label>Or link it to an existing item</label><select id="bsel">'+S.items.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join("")+'</select><div class="acts"><button class="gh" data-a="close">Cancel</button><button class="pri" data-a="bindex">Link and record</button></div>')}}
 
 async function startCam(){const v=$("#v");$("#camw").hidden=false;
  try{if("BarcodeDetector"in window){const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});v.srcObject=st;await v.play();cam.st=st;cam.on=true;
    const det=new BarcodeDetector({formats:["code_128","ean_13","ean_8","upc_a","upc_e","code_39","qr_code"]});
    const loop=async()=>{if(!cam.on)return;try{const r=await det.detect(v);if(r[0])got(r[0].rawValue)}catch(e){}setTimeout(loop,150)};loop()}
   else if(window.ZXing){cam.rd=new ZXing.BrowserMultiFormatReader();cam.on=true;cam.rd.decodeFromVideoDevice(undefined,"v",r=>{if(r)got(r.getText())})}
-  else throw 0}catch(e){stopCam();toast("預覽頁面不允許即時相機，請改按「拍照辨識條碼」")}}
+  else throw 0}catch(e){stopCam();toast("Live camera is blocked here. Use “Photo scan” instead.")}}
 function got(c){const n=Date.now();if(c===cam.last&&n-cam.t<1500)return;cam.last=c;cam.t=n;handle(c)}
 function stopCam(){cam.on=false;if(cam.st){cam.st.getTracks().forEach(t=>t.stop());cam.st=null}if(cam.rd){try{cam.rd.reset()}catch(e){}cam.rd=null}$("#v").srcObject=null;$("#camw").hidden=true}
 
 function modal(h){const m=$("#m");m.innerHTML='<div class="box">'+h+"</div>";m.hidden=false}
 const closeM=()=>{$("#m").hidden=true};
 function editor(it,codes){ed=it?it.id:null;const c=codes||(it?it.codes.filter(x=>x!==it.id):[]);
- modal("<h3>"+(it?"編輯品項":"新增品項")+'</h3><label>品名</label><input id="f_n" value="'+esc(it?it.name:"")+'"><label>分類</label><input id="f_c" list="cats" value="'+esc(it?it.cat:"")+'"><datalist id="cats">'+[...new Set(S.items.map(x=>x.cat))].map(x=>'<option value="'+esc(x)+'">').join("")+'</datalist><div class="r2"><div><label>庫存</label><input id="f_q" type="number" min="0" value="'+(it?it.qty:0)+'"></div><div><label>最低庫存</label><input id="f_m" type="number" min="0" value="'+(it?it.min:0)+'"></div></div><label>原廠條碼（多個用逗號分隔，沒有可留空）</label><input id="f_b" value="'+esc(c.join(","))+'">'+(it?'<p class="mu">內部條碼 '+it.id+"，可在「標籤」頁列印</p>":'<p class="mu">儲存後自動產生內部條碼，可列印貼在抽屜</p>')+'<div class="acts">'+(it?'<button class="gh" data-a="del">刪除</button>':"")+'<button class="gh" data-a="close">取消</button><button class="pri" data-a="saveit">儲存</button></div>')}
-function saveIt(){const n=$("#f_n").value.trim();if(!n){toast("請輸入品名");return}
+ modal("<h3>"+(it?"Edit item":"New item")+'</h3><label>Name</label><input id="f_n" value="'+esc(it?it.name:"")+'"><label>Category</label><input id="f_c" list="cats" value="'+esc(it?it.cat:"")+'"><datalist id="cats">'+[...new Set(S.items.map(x=>x.cat))].map(x=>'<option value="'+esc(x)+'">').join("")+'</datalist><div class="r2"><div><label>On hand</label><input id="f_q" type="number" min="0" value="'+(it?it.qty:0)+'"></div><div><label>Minimum stock</label><input id="f_m" type="number" min="0" value="'+(it?it.min:0)+'"></div></div><label>Manufacturer barcodes (comma-separated, optional)</label><input id="f_b" value="'+esc(c.join(","))+'">'+(it?'<p class="mu">Internal barcode '+it.id+". Print it from the Labels tab.</p>":'<p class="mu">An internal barcode is created when you save. Print it and stick it on the drawer.</p>')+'<div class="acts">'+(it?'<button class="gh" data-a="del">Delete</button>':"")+'<button class="gh" data-a="close">Cancel</button><button class="pri" data-a="saveit">Save</button></div>')}
+function saveIt(){const n=$("#f_n").value.trim();if(!n){toast("Enter a name");return}
  const extra=$("#f_b").value.split(/[,，\s]+/).map(x=>x.trim()).filter(Boolean);
- const dup=extra.find(c=>{const o=find(c);return o&&o.id!==ed});if(dup){toast("條碼 "+dup+" 已屬於「"+find(dup).name+"」");return}
+ const dup=extra.find(c=>{const o=find(c);return o&&o.id!==ed});if(dup){toast("Barcode "+dup+" already belongs to “"+find(dup).name+"”");return}
  let it=ed?get(ed):null;if(!it){const id="SR-"+String(++S.seq).padStart(4,"0");it={id,codes:[id]};S.items.push(it)}
- it.name=n;it.cat=$("#f_c").value.trim()||"未分類";it.qty=Math.max(0,+$("#f_q").value||0);it.min=Math.max(0,+$("#f_m").value||0);it.codes=[it.id,...extra];
+ it.name=n;it.cat=$("#f_c").value.trim()||"Uncategorized";it.qty=Math.max(0,+$("#f_q").value||0);it.min=Math.max(0,+$("#f_m").value||0);it.codes=[it.id,...extra];
  save();closeM();render();if(pc){const c=pc;pc="";handle(c)}}
 
 const A={tab(i){tab=i;render()},mode(i){S.mode=i;save();render()},cam:startCam,stopcam:stopCam,
  inc(i){adj(get(i),1)},dec(i){adj(get(i),-1)},edit(i){editor(get(i))},new(){pc="";editor(null)},undo,close(){pc="";closeM()},
- saveit:saveIt,del(){const it=get(ed);if(it&&confirm("刪除「"+it.name+"」？")){S.items=S.items.filter(x=>x!==it);save();closeM();render()}},
+ saveit:saveIt,del(){const it=get(ed);if(it&&confirm("Delete “"+it.name+"”?")){S.items=S.items.filter(x=>x!==it);save();closeM();render()}},
  bindnew(){const c=pc;closeM();editor(null,[c])},
  bindex(){const it=get($("#bsel").value);if(it&&!it.codes.includes(pc))it.codes.push(pc);save();closeM();const c=pc;pc="";handle(c)},
  gen(){sel=[...document.querySelectorAll(".lsel:checked")].map(x=>x.value);drawLabels()},
  all(){document.querySelectorAll(".lsel").forEach(x=>x.checked=true)},
- print(){window.print()},reset(){if(confirm("還原成範例資料？目前資料會清除")){localStorage.removeItem(K);location.reload()}}};
+ print(){window.print()},reset(){if(confirm("Restore sample data? Current data will be erased.")){localStorage.removeItem(K);location.reload()}}};
 document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(b&&A[b.dataset.a])A[b.dataset.a](b.dataset.i)});
 document.addEventListener("input",e=>{if(e.target.id==="usr"){S.user=e.target.value;save()}else if(e.target.id==="n")nq=+e.target.value||1;else if(e.target.id==="q"||e.target.id==="lo")listStock()});
 document.addEventListener("change",e=>{if(e.target.id==="lo")listStock()});
@@ -124,18 +124,18 @@ document.addEventListener("keydown",e=>{
 document.addEventListener("change",async e=>{if(e.target.id!=="pic"||!e.target.files[0])return;const f=e.target.files[0];e.target.value="";const url=URL.createObjectURL(f);let code=null;
  try{if("BarcodeDetector"in window){const r=await new BarcodeDetector().detect(await createImageBitmap(f));if(r[0])code=r[0].rawValue}
   if(!code&&window.ZXing){const r=await new ZXing.BrowserMultiFormatReader().decodeFromImageUrl(url);code=r.getText()}}catch(err){}
- URL.revokeObjectURL(url);if(code)handle(code);else toast("沒有辨識到條碼，請靠近一點、對焦後再拍")});
-function recent(n){const l=S.log.slice(0,n);return l.length?l.map(row).join(""):'<div class="empty">還沒有紀錄。掃一下條碼試試</div>'}
-function row(e){return'<div class="lg'+(e.x?" x":"")+'"><span class="d '+(e.d>0?"p":"m")+'">'+(e.d>0?"+":"")+e.d+"</span><div><b>"+esc(e.n)+"</b> 剩 "+e.q+"<small>"+new Date(e.t).toLocaleString("zh-TW",{hour12:false})+" · "+esc(e.u)+"</small></div></div>"}
-function vScan(){const o=S.mode==="out";return'<div class="seg"><button data-a="mode" data-i="out" class="'+(o?"on":"")+'">出貨 −</button><button data-a="mode" data-i="in" class="'+(o?"":"on")+'">進貨 +</button></div><div class="row"><label>每次掃描數量</label><input id="n" type="number" min="1" value="'+nq+'"></div><button class="big" data-a="cam">📷 開啟相機掃碼</button><label class="gh" style="text-align:center;margin:0 0 12px">📸 拍照辨識條碼（即時相機打不開時用）<input id="pic" type="file" accept="image/*" capture="environment" hidden></label><input id="man" placeholder="掃碼槍或手動輸入條碼，按 Enter" autocomplete="off" inputmode="text"><p class="mu">電腦接掃碼槍時，直接掃就會記錄，不必先點輸入框。</p><h3>最近紀錄</h3>'+recent(6)}
-function vStock(){return'<input id="q" placeholder="搜尋品名、分類或條碼" autocomplete="off"><div class="row"><label><input id="lo" type="checkbox" style="width:auto;margin-right:6px">只看低庫存</label><span style="flex:1"></span><button class="pri" data-a="new">＋ 新增品項</button></div><div id="lst"></div><p class="mu"><button class="gh" data-a="reset">還原範例資料</button></p>'}
+ URL.revokeObjectURL(url);if(code)handle(code);else toast("No barcode found. Move closer, focus, and try again.")});
+function recent(n){const l=S.log.slice(0,n);return l.length?l.map(row).join(""):'<div class="empty">No activity yet. Scan a barcode to try it.</div>'}
+function row(e){return'<div class="lg'+(e.x?" x":"")+'"><span class="d '+(e.d>0?"p":"m")+'">'+(e.d>0?"+":"")+e.d+"</span><div><b>"+esc(e.n)+"</b> now "+e.q+"<small>"+new Date(e.t).toLocaleString("en-AU",{hour12:false})+" · "+esc(e.u)+"</small></div></div>"}
+function vScan(){const o=S.mode==="out";return'<div class="seg"><button data-a="mode" data-i="out" class="'+(o?"on":"")+'">Take out −</button><button data-a="mode" data-i="in" class="'+(o?"":"on")+'">Receive +</button></div><div class="row"><label>Quantity per scan</label><input id="n" type="number" min="1" value="'+nq+'"></div><button class="big" data-a="cam">📷 Open camera scanner</button><label class="gh" style="text-align:center;margin:0 0 12px">📸 Photo scan (use if live camera won’t open)<input id="pic" type="file" accept="image/*" capture="environment" hidden></label><input id="man" placeholder="Scanner gun, or type a barcode and press Enter" autocomplete="off" inputmode="text"><p class="mu">With a USB scanner on a computer, just scan. No need to click the box first.</p><h3>Recent activity</h3>'+recent(6)}
+function vStock(){return'<input id="q" placeholder="Search name, category or barcode" autocomplete="off"><div class="row"><label><input id="lo" type="checkbox" style="width:auto;margin-right:6px">Low stock only</label><span style="flex:1"></span><button class="pri" data-a="new">+ New item</button></div><div id="lst"></div><p class="mu"><button class="gh" data-a="reset">Restore sample data</button></p>'}
 function listStock(){const q=($("#q").value||"").toLowerCase(),lo=$("#lo").checked;
  const r=S.items.filter(x=>(!lo||x.qty<=x.min)&&(!q||(x.name+x.cat+x.codes.join(" ")).toLowerCase().includes(q))).sort((a,b)=>(b.qty<=b.min)-(a.qty<=a.min)||a.cat.localeCompare(b.cat));
- $("#lst").innerHTML=r.length?r.map(x=>'<div class="it'+(x.qty<=x.min?" low":"")+'"><div class="inf" data-a="edit" data-i="'+x.id+'"><b>'+esc(x.name)+"</b><small>"+esc(x.cat)+" · 最低 "+x.min+(x.qty<=x.min?" · 需補貨":"")+'</small></div><div class="ct"><button data-a="dec" data-i="'+x.id+'">−</button><span>'+x.qty+'</span><button data-a="inc" data-i="'+x.id+'">+</button></div></div>').join(""):'<div class="empty">沒有符合的品項</div>'}
-function vLabel(){return'<p class="mu noprint">每個品項有一個內部條碼（Code 128），貼在抽屜外。LS2208 掃碼槍只能讀一維條碼，所以標籤不用 QR。</p><div class="noprint">'+S.items.map(x=>'<label class="chk"><input class="lsel" type="checkbox" value="'+x.id+'"'+(!sel||sel.includes(x.id)?" checked":"")+"> "+esc(x.name)+"</label>").join("")+'<div class="acts"><button class="gh" data-a="all">全選</button><button class="pri" data-a="gen">產生標籤</button><button class="gh" data-a="print">列印</button></div></div><div class="labs" id="labs"></div>'}
+ $("#lst").innerHTML=r.length?r.map(x=>'<div class="it'+(x.qty<=x.min?" low":"")+'"><div class="inf" data-a="edit" data-i="'+x.id+'"><b>'+esc(x.name)+"</b><small>"+esc(x.cat)+" · min "+x.min+(x.qty<=x.min?" · reorder":"")+'</small></div><div class="ct"><button data-a="dec" data-i="'+x.id+'">−</button><span>'+x.qty+'</span><button data-a="inc" data-i="'+x.id+'">+</button></div></div>').join(""):'<div class="empty">No matching items</div>'}
+function vLabel(){return'<p class="mu noprint">Each item has an internal Code 128 barcode to stick on its drawer. The LS2208 scanner reads 1D barcodes only, so labels are not QR codes.</p><div class="noprint">'+S.items.map(x=>'<label class="chk"><input class="lsel" type="checkbox" value="'+x.id+'"'+(!sel||sel.includes(x.id)?" checked":"")+"> "+esc(x.name)+"</label>").join("")+'<div class="acts"><button class="gh" data-a="all">Select all</button><button class="pri" data-a="gen">Generate labels</button><button class="gh" data-a="print">Print</button></div></div><div class="labs" id="labs"></div>'}
 function drawLabels(){const L=$("#labs");if(!L)return;const ids=sel||S.items.map(x=>x.id);L.innerHTML=ids.map(i=>get(i)).filter(Boolean).map(x=>'<div class="lab">'+esc(x.name)+'<svg class="bc" data-c="'+x.id+'"></svg></div>').join("");
  document.querySelectorAll(".bc").forEach(s=>{try{JsBarcode(s,s.dataset.c,{format:"CODE128",height:46,displayValue:true,fontSize:14,margin:2,background:"#ffffff",lineColor:"#000000"})}catch(e){}})}
-function vLog(){return'<div class="row"><b style="flex:1">異動紀錄</b><button class="gh" data-a="undo">撤銷上一筆</button></div>'+recent(100)}
+function vLog(){return'<div class="row"><b style="flex:1">Activity log</b><button class="gh" data-a="undo">Undo last</button></div>'+recent(100)}
 function render(){$("#usr").value=S.user;document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.i===tab));
  $("#main").innerHTML=({scan:vScan,stock:vStock,label:vLabel,log:vLog})[tab]();if(tab==="stock")listStock();if(tab==="label")drawLabels()}
 render();
